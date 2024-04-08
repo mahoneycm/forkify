@@ -1,67 +1,41 @@
-import icons from '../img/icons.svg';
-import 'core-js/stable';
-import 'regenerator-runtime/runtime';
+import icons from '../../img/icons.svg';
+import { Fraction } from 'fractional';
 
-const recipeContainer = document.querySelector('.recipe');
+class RecipeView {
+  #parentElement = document.querySelector('.recipe');
+  #data;
 
-const timeout = function (s) {
-  return new Promise(function (_, reject) {
-    setTimeout(function () {
-      reject(new Error(`Request took too long! Timeout after ${s} second`));
-    }, s * 1000);
-  });
-};
+  render(data) {
+    this.#data = data;
+    const markup = this.#generateMarkup();
+    this.#clear();
+    this.#parentElement.insertAdjacentHTML('afterbegin', markup);
+  }
 
-// https://forkify-api.herokuapp.com/v2
+  #clear() {
+    this.#parentElement.innerHTML = '';
+  }
 
-///////////////////////////////////////
-
-const renderSpinner = parentEl => {
-  const markup = `
+  renderSpinner = parentEl => {
+    const markup = `
     <div class="spinner">
       <svg>
         <use href="${icons}#icon-loader"></use>
       </svg>
     </div>
   `;
-  parentEl.innerHTML = '';
-  parentEl.insertAdjacentHTML('afterbegin', markup);
-};
+    this.#parentElement.innerHTML = '';
+    this.#parentElement.insertAdjacentHTML('afterbegin', markup);
+  };
 
-const showRecipe = async () => {
-  try {
-    // Loading recipe
-    renderSpinner(recipeContainer);
-    const res = await fetch(
-      // 'https://forkify-api.herokuapp.com/api/v2/recipes/5ed6604591c37cdc054bc886'
-      'https://forkify-api.herokuapp.com/api/v2/recipes/5ed6604591c37cdc054bcc76'
-    );
-
-    const data = await res.json();
-
-    if (!res.ok) throw new Error(`${data.message} (${res.status})`);
-
-    let { recipe } = data.data;
-
-    recipe = {
-      id: recipe.id,
-      title: recipe.title,
-      publisher: recipe.publisher,
-      sourceUrl: recipe.source_url,
-      image: recipe.image_url,
-      servings: recipe.servings,
-      cookingTime: recipe.cooking_time,
-      ingredients: recipe.ingredients,
-    };
-
-    console.log(recipe);
-
-    // Rendering recipe
-    const markup = `
+  #generateMarkup() {
+    return `
       <figure class="recipe__fig">
-        <img src="${recipe.image}" alt="${recipe.title}" class="recipe__img" />
+        <img src="${this.#data.image}" alt="${
+      this.#data.title
+    }" class="recipe__img" />
         <h1 class="recipe__title">
-          <span>${recipe.title}</span>
+          <span>${this.#data.title}</span>
         </h1>
       </figure>
 
@@ -71,7 +45,7 @@ const showRecipe = async () => {
             <use href="${icons}#icon-clock"></use>
           </svg>
           <span class="recipe__info-data recipe__info-data--minutes">${
-            recipe.cookingTime
+            this.#data.cookingTime
           }</span>
           <span class="recipe__info-text">minutes</span>
         </div>
@@ -80,7 +54,7 @@ const showRecipe = async () => {
             <use href="${icons}#icon-users"></use>
           </svg>
           <span class="recipe__info-data recipe__info-data--people">${
-            recipe.servings
+            this.#data.servings
           }</span>
           <span class="recipe__info-text">servings</span>
 
@@ -113,22 +87,7 @@ const showRecipe = async () => {
       <div class="recipe__ingredients">
         <h2 class="heading--2">Recipe ingredients</h2>
         <ul class="recipe__ingredient-list">
-        ${recipe.ingredients
-          .map(ing => {
-            return `
-            <li class="recipe__ingredient">
-              <svg class="recipe__icon">
-                <use href="${icons}#icon-check"></use>
-              </svg>
-              <div class="recipe__quantity">${ing.quantity || ''}</div>
-              <div class="recipe__description">
-                <span class="recipe__unit">${ing.unit}</span>
-                ${ing.description}
-              </div>
-            </li>
-          `;
-          })
-          .join('')}
+        ${this.#data.ingredients.map(this.#generateMarkupIngredient).join('')}
         </ul>
       </div>
 
@@ -137,13 +96,13 @@ const showRecipe = async () => {
         <p class="recipe__directions-text">
           This recipe was carefully designed and tested by
           <span class="recipe__publisher">${
-            recipe.publisher
+            this.#data.publisher
           }</span>. Please check out
           directions at their website.
         </p>
         <a
           class="btn--small recipe__btn"
-          href="${recipe.sourceUrl}"
+          href="${this.#data.sourceUrl}"
           target="_blank"
         >
           <span>Directions</span>
@@ -153,12 +112,24 @@ const showRecipe = async () => {
         </a>
       </div>
     `;
-
-    recipeContainer.innerHTML = '';
-    recipeContainer.insertAdjacentHTML('afterbegin', markup);
-  } catch (err) {
-    alert(err);
   }
-};
 
-showRecipe();
+  #generateMarkupIngredient(ing) {
+    return `
+    <li class="recipe__ingredient">
+      <svg class="recipe__icon">
+        <use href="${icons}#icon-check"></use>
+      </svg>
+      <div class="recipe__quantity">${
+        ing.quantity ? new Fraction(ing.quantity).toString() : ''
+      }</div>
+      <div class="recipe__description">
+        <span class="recipe__unit">${ing.unit}</span>
+        ${ing.description}
+      </div>
+    </li>
+  `;
+  }
+}
+
+export default new RecipeView();
