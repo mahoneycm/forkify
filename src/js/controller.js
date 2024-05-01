@@ -2,6 +2,7 @@ import * as model from './model.js';
 import recipeView from './views/recipeView.js';
 import searchView from './views/searchView.js';
 import resultsView from './views/resultsView.js';
+import paginationView from './views/paginationView.js';
 
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
@@ -17,7 +18,6 @@ const timeout = function (s) {
     }, s * 1000);
   });
 };
-
 
 ///////////////////////////////////////
 
@@ -49,12 +49,13 @@ const controlSearchResults = async () => {
     // 2) Load search results
     await model.loadSearchResults(query);
 
-    // TODO: 3) Display results
-    resultsView.render(model.state.search.results);
+    // 3) Display results
+    resultsView.render(model.getSearchResultsPerPage());
+    paginationView.render(model.state.search);
   } catch (error) {
     console.log(error);
   }
-}
+};
 
 const init = () => {
   recipeView.addHandlerRender(controlRecipes);
